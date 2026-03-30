@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Health Plus - Login</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:
+    linear-gradient(rgba(0,0,0,0.85),rgba(0,0,0,0.85)),
+    url('https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?auto=format&fit=crop&w=1600&q=80');
+    background-size:cover;
+    background-position:center;
+}
+
+.container{
+    width:420px;
+    padding:40px;
+    background:rgba(255,255,255,0.08);
+    backdrop-filter: blur(18px);
+    border-radius:25px;
+    box-shadow:0 0 40px rgba(0,0,0,0.6);
+    color:white;
+    animation:slideUp 1s ease;
+}
+
+@keyframes slideUp{
+    from{opacity:0; transform:translateY(40px);}
+    to{opacity:1; transform:translateY(0);}
+}
+
+.container h2{
+    text-align:center;
+    margin-bottom:30px;
+    font-size:28px;
+    color:#00e0ff;
+    letter-spacing:1px;
+}
+
+.input-box{
+    margin-bottom:20px;
+}
+
+.input-box label{
+    font-size:14px;
+    color:#bbb;
+}
+
+.input-box input,
+.input-box select{
+    width:100%;
+    padding:12px;
+    margin-top:6px;
+    border:none;
+    border-radius:10px;
+    outline:none;
+    background:rgba(255,255,255,0.15);
+    color:white;
+    font-size:14px;
+}
+
+.input-box input::placeholder{
+    color:#ddd;
+}
+
+.login-btn{
+    width:100%;
+    padding:14px;
+    margin-top:15px;
+    border:none;
+    border-radius:30px;
+    background:linear-gradient(45deg,#00b4d8,#0077b6);
+    color:white;
+    font-weight:bold;
+    font-size:15px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.login-btn:hover{
+    transform:scale(1.05);
+}
+
+.footer{
+    text-align:center;
+    margin-top:18px;
+    font-size:13px;
+    color:#aaa;
+}
+
+</style>
+
+<script>
+function loginUser(){
+
+    const name = document.getElementById("name").value.trim();
+    const contact = document.getElementById("contact").value.trim();
+    const role = document.getElementById("role").value;
+
+    if(name === "" || contact === ""){
+        alert("Please fill all fields");
+        return;
+    }
+
+    // ✅ UPDATED FETCH (NO localhost)
+   fetch("/login", {
+    method:"POST",
+    headers:{
+        "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+        name:name,
+        contact:contact,
+        role:role
+    })
+})
+    .then(response => {
+        if(!response.ok){
+            throw new Error("Network response was not ok");
+        }
+        return response.text();
+    })
+    .then(data=>{
+
+        alert(data);
+
+        // Save user info
+        localStorage.setItem("username", name);
+        localStorage.setItem("role", role);
+
+        // Redirect based on role
+        if(role === "Patient"){
+            window.location.href = "patient-dashboard.html";
+        } 
+        else {
+            window.location.href = "doctor-dashboard.html";
+        }
+
+    })
+    .catch(error=>{
+        console.error("Error:",error);
+        alert("Server Error ❌");
+    });
+}
+</script>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Health Plus Login</h2>
+
+    <div class="input-box">
+        <label>Full Name</label>
+        <input type="text" id="name" placeholder="Enter your name">
+    </div>
+
+    <div class="input-box">
+        <label>Contact Number</label>
+        <input type="text" id="contact" placeholder="Enter contact number">
+    </div>
+
+    <div class="input-box">
+        <label>Select Role</label>
+        <select id="role">
+            <option value="Patient">Patient</option>
+            <option value="Doctor">Doctor</option>
+        </select>
+    </div>
+
+    <button class="login-btn" onclick="loginUser()">Login</button>
+
+    <div class="footer">
+        Secure Healthcare Access System
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Health Plus - Patient Dashboard</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+
+body{
+background:linear-gradient(135deg,#0a192f,#112240,#0f3057);
+color:#e6f1ff;
+}
+
+.navbar{
+background:#0a192f;
+padding:15px 30px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+border-bottom:1px solid rgba(0,224,255,0.2);
+}
+
+.logo{font-size:22px;font-weight:bold;}
+.logo span{color:#00e0ff;}
+
+.nav-right{display:flex;gap:20px;align-items:center;}
+
+.logout-btn{
+background:#00e0ff;
+color:#0a192f;
+border:none;
+padding:6px 14px;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.dashboard{display:flex;height:calc(100vh - 70px);}
+
+.sidebar{
+width:260px;
+background:#112240;
+padding:20px;
+border-right:1px solid rgba(0,224,255,0.2);
+}
+
+.menu-item{
+padding:12px;
+margin-bottom:10px;
+border-radius:8px;
+cursor:pointer;
+transition:0.3s;
+}
+
+.menu-item:hover{
+background:rgba(0,224,255,0.15);
+}
+
+.content{flex:1;padding:30px;overflow-y:auto;}
+
+.card{
+background:#112240;
+padding:20px;
+border-radius:12px;
+margin-bottom:15px;
+border:1px solid rgba(0,224,255,0.15);
+}
+
+.btn{
+margin-top:10px;
+padding:6px 12px;
+background:#00e0ff;
+color:#0a192f;
+border:none;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+input,select,textarea{
+width:100%;
+padding:8px;
+margin-top:8px;
+border:none;
+border-radius:6px;
+background:#0f3057;
+color:white;
+}
+</style>
+
+<script>
+
+function loadPatient(){
+
+let name = localStorage.getItem("username");
+let role = localStorage.getItem("role");
+
+if(!name || role !== "Patient"){
+alert("Access Denied! Please login as Patient.");
+window.location="login.html";
+return;
+}
+
+let id = localStorage.getItem("patientId");
+
+if(!id){
+id="PAT"+Math.floor(Math.random()*10000);
+localStorage.setItem("patientId",id);
+}
+
+document.getElementById("patientName").innerText=name;
+document.getElementById("patientId").innerText=id;
+
+showSection("availability");
+}
+
+function getAppointments(){
+return JSON.parse(localStorage.getItem("appointments"))||[];
+}
+
+function saveAppointments(data){
+localStorage.setItem("appointments",JSON.stringify(data));
+}
+
+function getDoctors(){
+return JSON.parse(localStorage.getItem("registeredDoctors")) || [];
+}
+
+function showSection(type){
+
+let content=document.getElementById("content");
+content.innerHTML="";
+let name=localStorage.getItem("username");
+let appointments=getAppointments();
+let doctors=getDoctors();
+
+
+// Doctor Availability
+if(type==="availability"){
+content.innerHTML="<h2>Doctor Availability</h2>";
+
+if(doctors.length===0){
+content.innerHTML+="<p>No Doctors Available</p>";
+return;
+}
+
+doctors.forEach(d=>{
+content.innerHTML+=`
+<div class="card">
+<h3>${d.name}</h3>
+<p>Specialization: ${d.specialization || "General"}</p>
+<p>Status: Available</p>
+</div>`;
+});
+}
+
+
+// Doctor List
+if(type==="doctorList"){
+content.innerHTML="<h2>Doctor List</h2>";
+
+if(doctors.length===0){
+content.innerHTML+="<p>No Doctors Registered</p>";
+return;
+}
+
+doctors.forEach(d=>{
+content.innerHTML+=`
+<div class="card">
+<h3>${d.name}</h3>
+<p>Specialization: ${d.specialization || "General"}</p>
+<p>Experience: ${d.experience || "0"} Years</p>
+</div>`;
+});
+}
+
+
+// Book Appointment
+if(type==="book"){
+
+if(doctors.length===0){
+content.innerHTML="<h2>No Doctors Available For Booking</h2>";
+return;
+}
+
+content.innerHTML=`
+<h2>Book Appointment</h2>
+<div class="card">
+<select id="doctorSelect">
+${doctors.map(d=>`<option>${d.name}</option>`).join("")}
+</select>
+<input type="date" id="date">
+<input type="time" id="time">
+<button class="btn" onclick="book()">Book</button>
+</div>`;
+}
+
+
+// Cancel Appointment
+if(type==="cancel"){
+content.innerHTML="<h2>Your Appointments</h2>";
+
+appointments.forEach((a,i)=>{
+if(a.patient===name){
+content.innerHTML+=`
+<div class="card">
+<h3>${a.doctor}</h3>
+<p>Date: ${a.date}</p>
+<p>Time: ${a.time}</p>
+<p>Status: ${a.status}</p>
+<button class="btn" onclick="cancelAppointment(${i})">Cancel</button>
+</div>`;
+}
+});
+}
+
+
+// Rating
+if(type==="rating"){
+content.innerHTML="<h2>Rate Doctor</h2>";
+
+appointments.forEach(a=>{
+if(a.patient===name && a.status==="Completed"){
+content.innerHTML+=`
+<div class="card">
+<h3>${a.doctor}</h3>
+<input type="number" min="1" max="5" placeholder="Rating">
+<textarea placeholder="Review"></textarea>
+<button class="btn">Submit</button>
+</div>`;
+}
+});
+}
+
+
+// Medical
+if(type==="medical"){
+content.innerHTML=`
+<h2>Medical Record & Health Tracking</h2>
+<div class="card">
+<textarea placeholder="Enter medical history"></textarea>
+<button class="btn">Save</button>
+</div>`;
+}
+
+
+// Profile
+if(type==="profile"){
+content.innerHTML=`
+<h2>Profile & Personalization</h2>
+<div class="card">
+<input placeholder="Full Name">
+<input placeholder="Age">
+<input placeholder="Blood Group">
+<button class="btn">Update Profile</button>
+</div>`;
+}
+
+}
+
+
+// Book Function
+function book(){
+
+let doctor=document.getElementById("doctorSelect").value;
+let date=document.getElementById("date").value;
+let time=document.getElementById("time").value;
+let name=localStorage.getItem("username");
+
+if(date===""||time===""){
+alert("Select date & time");
+return;
+}
+
+let appointments=getAppointments();
+
+appointments.push({
+doctor:doctor,
+patient:name,
+date:date,
+time:time,
+status:"Pending"
+});
+
+saveAppointments(appointments);
+alert("Appointment Booked Successfully");
+showSection("cancel");
+}
+
+
+// Cancel
+function cancelAppointment(index){
+let appointments=getAppointments();
+appointments.splice(index,1);
+saveAppointments(appointments);
+showSection("cancel");
+}
+
+
+// Logout
+function logout(){
+localStorage.removeItem("username");
+localStorage.removeItem("role");
+window.location="login.html";
+}
+
+</script>
+
+</head>
+
+<body onload="loadPatient()">
+
+<div class="navbar">
+<div class="logo">Health <span>Plus</span></div>
+<div class="nav-right">
+<div>Name: <span id="patientName"></span></div>
+<div>ID: <span id="patientId"></span></div>
+<button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div class="dashboard">
+<div class="sidebar">
+<div class="menu-item" onclick="showSection('availability')">Doctor Availability</div>
+<div class="menu-item" onclick="showSection('doctorList')">Doctor List</div>
+<div class="menu-item" onclick="showSection('book')">Appointment Booking</div>
+<div class="menu-item" onclick="showSection('cancel')">Cancel Appointment</div>
+<div class="menu-item" onclick="showSection('rating')">Doctor Rating</div>
+<div class="menu-item" onclick="showSection('medical')">Medical Record & Health Tracking</div>
+<div class="menu-item" onclick="showSection('profile')">Profile & Personalization</div>
+</div>
+<div class="content" id="content"></div>
+</div>
+
+</body>
+</html>
